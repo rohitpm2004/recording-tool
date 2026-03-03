@@ -13,7 +13,7 @@ import { protect, teacherOnly } from "../middleware/auth.js"
 const router = Router();
 
 router.post("/register", register);
-router.post("/login", loginLimiter, login);
+router.post("/login",  login);
 router.get("/me", protect, getMe);
 
 router.post("/forgot-password", forgotPassword);
