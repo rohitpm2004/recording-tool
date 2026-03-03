@@ -1,5 +1,5 @@
 import axios from "axios";
-let baseURL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+let baseURL = import.meta.env.VITE_API_URL || "https://recording-tool.onrender.com/api";
 const API = axios.create({ baseURL });
 
 // attach JWT on every request
