@@ -2,8 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useAuth } from "../context/AuthContext";
 import API from "../api/axios";
 import { Upload, Trash2, FileText, Image as ImageIcon, X, Plus, Search, Filter } from "lucide-react";
-import { DEPARTMENTS } from "../constants";
-
+import { SUBJECT_TOPICS } from "../constants";
 const CATEGORIES = ["Question Paper", "Records", "Assignment", "Other"];
 
 export default function TeacherResources() {
@@ -15,9 +14,6 @@ export default function TeacherResources() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("Other");
-  const [file, setFile] = useState(null);
-  const [dept, setDept] = useState(user?.department || "");
-  const [sem, setSem] = useState(user?.semester || 1);
   const [subject, setSubject] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("All");
@@ -45,8 +41,6 @@ export default function TeacherResources() {
       formData.append("title", title);
       formData.append("description", description);
       formData.append("category", category);
-      formData.append("department", dept);
-      formData.append("semester", sem);
       formData.append("subject", subject);
 
       await API.post("/resources", formData, {
@@ -102,20 +96,6 @@ export default function TeacherResources() {
           <div>
             <h2>Resources</h2>
             <p>Share PDFs and images with your students</p>
-          </div>
-          <div style={{ textAlign: "right" }}>
-            <div style={{ 
-              fontSize: "0.85rem", 
-              fontWeight: 700, 
-              color: "var(--primary)", 
-              background: "var(--primary-light)", 
-              padding: "8px 20px", 
-              borderRadius: "100px",
-              border: "1px solid var(--primary-glow)",
-              boxShadow: "var(--shadow-sm)"
-            }}>
-              {user?.department}
-            </div>
           </div>
         </div>
       </div>
@@ -199,37 +179,17 @@ export default function TeacherResources() {
               <div className="form-row">
                 <div className="form-group">
                   <label className="form-label">Subject</label>
-                  <input
+                  <select
                     className="form-input"
-                    placeholder="e.g. Operating Systems"
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
                     required
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Department</label>
-                  <select className="form-input" value={dept} onChange={(e) => setDept(e.target.value)} required>
-                    <option value="">Select Department</option>
-                    {DEPARTMENTS.map(d => (
-                      <option key={d} value={d}>{d}</option>
-                    ))}
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label">Semester</label>
-                  <select className="form-input" value={sem} onChange={(e) => setSem(Number(e.target.value))} required>
-                    {[1, 2, 3, 4, 5, 6].map(s => (
-                      <option key={s} value={s}>Semester {s}</option>
+                  >
+                    <option value="">Select a topic</option>
+                    {SUBJECT_TOPICS.map((topic) => (
+                      <option key={topic} value={topic}>{topic}</option>
                     ))}
                   </select>
-                </div>
-                <div className="form-group" style={{ visibility: "hidden" }}>
-                   {/* Placeholder for layout balance */}
                 </div>
               </div>
               <div className="form-group">
@@ -315,10 +275,7 @@ export default function TeacherResources() {
                     {r.fileType === "pdf" ? "PDF" : "Image"} • {r.fileName}
                   </div>
                   <div style={{ fontSize: "0.75rem", color: "var(--primary)", fontWeight: 600, marginTop: 4 }}>
-                    {r.subject} • Sem {r.semester}
-                  </div>
-                  <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", marginTop: 2 }}>
-                    {r.department}
+                    {r.subject}
                   </div>
                   {r.description && (
                     <div style={{ fontSize: "0.82rem", color: "var(--text-muted)", marginTop: 4 }}>

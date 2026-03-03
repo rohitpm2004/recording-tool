@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api/axios";
 import { useAuth } from "../context/AuthContext";
-import { Plus, Trash2, Video as VideoIcon, Users, Clock, X, Link as LinkIcon, Play, Copy, Check, Pencil } from "lucide-react";
-import { DEPARTMENTS } from "../constants";
+import { Plus, Trash2, Video as VideoIcon, Users, Clock, X, Link as LinkIcon, Play, Copy, Check, Pencil, MessageCircle, Linkedin, Instagram, Share2 } from "lucide-react";
+import { SUBJECT_TOPICS } from "../constants";
 
 /* Helper: extract Video ID */
 function getVideoId(url) {
@@ -22,8 +22,6 @@ const EMPTY_FORM = {
   description: "", 
   youtubeUrl: "", 
   duration: "",
-  department: "",
-  semester: 1,
   subject: ""
 };
 
@@ -38,6 +36,7 @@ export default function TeacherDashboard() {
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
   const [classroomCount, setClassroomCount] = useState(0);
+  const [shareModal, setShareModal] = useState(null);
 
 
   const loadVideos = async () => {
@@ -74,8 +73,6 @@ export default function TeacherDashboard() {
       description: v.description || "",
       youtubeUrl: v.youtubeUrl,
       duration: v.duration ? String(Math.round(v.duration / 60)) : "",
-      department: v.department || "",
-      semester: v.semester || 1,
       subject: v.subject || ""
     });
     setFormError("");
@@ -137,9 +134,6 @@ export default function TeacherDashboard() {
           <div>
             <h2>Teacher Dashboard</h2>
             <p>Manage lectures and track student engagement</p>
-          </div>
-          <div className="profile-badge">
-            {user?.department}
           </div>
         </div>
       </div>
@@ -215,35 +209,21 @@ export default function TeacherDashboard() {
                 </div>
                 <div className="form-group">
                   <label className="form-label">Subject</label>
-                  <input
-                    className="form-input"
-                    placeholder="e.g. Web Development"
+                  <select
+                    className="form-select"
                     value={form.subject}
                     onChange={set("subject")}
                     required
-                  />
+                  >
+                    <option value="">Select a topic</option>
+                    {SUBJECT_TOPICS.map((topic) => (
+                      <option key={topic} value={topic}>{topic}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
               <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label">Department</label>
-                  <select className="form-input" value={form.department} onChange={set("department")} required>
-                    <option value="">Select Department</option>
-                    {DEPARTMENTS.map(dept => (
-                      <option key={dept} value={dept}>{dept}</option>
-                    ))}
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Semester</label>
-                  <select className="form-input" value={form.semester} onChange={set("semester")} required>
-                    {[1, 2, 3, 4, 5, 6].map(s => (
-                      <option key={s} value={s}>Semester {s}</option>
-                    ))}
-                  </select>
-                </div>
                 <div className="form-group">
                   <label className="form-label">Duration (min)</label>
                   <input
@@ -328,6 +308,12 @@ export default function TeacherDashboard() {
                       <button className="btn btn-primary btn-sm" onClick={() => navigate(`/teacher/watch/${v._id}`)}>
                         <Play size={14} /> Watch
                       </button>
+                      <button 
+                        className="btn btn-outline btn-sm" 
+                        onClick={() => setShareModal(v)}
+                      >
+                        <Share2 size={14} /> Share
+                      </button>
                       <button className="btn btn-outline btn-sm" onClick={() => openEditForm(v)}>
                         <Pencil size={14} /> Edit
                       </button>
@@ -341,6 +327,73 @@ export default function TeacherDashboard() {
             })}
           </div>
         )}
+
+        {/* Share Modal */}
+        {shareModal && (
+          <div className="modal-overlay" style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }} onClick={() => setShareModal(null)}>
+            <div className="modal-content" style={{ background: "white", padding: 24, borderRadius: 12, width: "90%", maxWidth: 350, boxShadow: "0 10px 25px rgba(0,0,0,0.1)" }} onClick={(e) => e.stopPropagation()}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                <h3 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 600 }}>Share Lecture</h3>
+                <button onClick={() => setShareModal(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)" }}>
+                  <X size={20} />
+                </button>
+              </div>
+              <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: 20 }}>
+                Share &quot;{shareModal.title}&quot; with your students.
+              </p>
+              
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                <button 
+                  className="btn btn-outline btn-block" 
+                  style={{ justifyContent: "flex-start", gap: 12, color: "#25D366", borderColor: "#25D366" }}
+                  onClick={() => {
+                    const url = `${window.location.origin}/student/watch/${shareModal._id}`;
+                    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(`Watch this lecture: ${shareModal.title}\n\n${url}`)}`, "_blank");
+                    setShareModal(null);
+                  }}
+                >
+                  <MessageCircle size={18} /> Share on WhatsApp
+                </button>
+                <button 
+                  className="btn btn-outline btn-block" 
+                  style={{ justifyContent: "flex-start", gap: 12, color: "#0077b5", borderColor: "#0077b5" }}
+                  onClick={() => {
+                    const url = `${window.location.origin}/student/watch/${shareModal._id}`;
+                    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, "_blank");
+                    setShareModal(null);
+                  }}
+                >
+                  <Linkedin size={18} /> Share on LinkedIn
+                </button>
+                <button 
+                  className="btn btn-outline btn-block" 
+                  style={{ justifyContent: "flex-start", gap: 12, color: "#E1306C", borderColor: "#E1306C" }}
+                  onClick={() => {
+                    const url = `${window.location.origin}/student/watch/${shareModal._id}`;
+                    navigator.clipboard.writeText(url);
+                    alert("Instagram requires manual sharing. Link copied to clipboard!");
+                    setShareModal(null);
+                  }}
+                >
+                  <Instagram size={18} /> Share on Instagram
+                </button>
+                <button 
+                  className="btn btn-primary btn-block" 
+                  style={{ justifyContent: "flex-start", gap: 12, marginTop: 8 }}
+                  onClick={() => {
+                    const url = `${window.location.origin}/student/watch/${shareModal._id}`;
+                    navigator.clipboard.writeText(url);
+                    alert("Link copied to clipboard!");
+                    setShareModal(null);
+                  }}
+                >
+                  <Copy size={18} /> Copy Link
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     </>
   );

@@ -9,9 +9,7 @@ const userSchema = new mongoose.Schema(
     role:        { type: String, enum: ["teacher", "student"], required: true },
     collegeName: { type: String, default: "" },
     group:       { type: String, default: "" },
-    department:  { type: String, default: "" },
-    semester:    { type: Number, default: 1 },
-
+    topic:       { type: String, default: "" },
     // Teachers: unique class code students use to join
     classCode:   { type: String, unique: true, sparse: true },
 

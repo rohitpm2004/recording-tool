@@ -160,20 +160,7 @@ export default function TeacherAnalytics() {
             <h2>Classroom Analytics</h2>
             <p>Monitor student engagement across all lectures</p>
           </div>
-          <div style={{ textAlign: "right" }}>
-            <div style={{ 
-              fontSize: "0.85rem", 
-              fontWeight: 700, 
-              color: "var(--primary)", 
-              background: "var(--primary-light)", 
-              padding: "8px 20px", 
-              borderRadius: "100px",
-              border: "1px solid var(--primary-glow)",
-              boxShadow: "var(--shadow-sm)"
-            }}>
-              {user?.department}
-            </div>
-          </div>
+
         </div>
       </div>
 
@@ -280,7 +267,6 @@ export default function TeacherAnalytics() {
                         <tr>
                           <th>Student</th>
                           <th>Email</th>
-                          <th>Dept</th>
                           <th>College</th>
                           <th>Watch Time</th>
                           <th>Videos Done</th>
@@ -292,7 +278,6 @@ export default function TeacherAnalytics() {
                           <tr key={i}>
                             <td style={{ fontWeight: 600 }}>{s.studentName}</td>
                             <td>{s.studentEmail}</td>
-                            <td style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{s.department || "—"}</td>
                             <td>{s.collegeName || "—"}</td>
                             <td>{formatTime(s.totalWatchTime)}</td>
                             <td>{s.videosCompleted} / {s.totalVideos}</td>
@@ -349,7 +334,6 @@ export default function TeacherAnalytics() {
                   <thead>
                     <tr>
                       <th>Student</th>
-                      <th>Dept</th>
                       <th>Group</th>
                       <th>Watch Time</th>
                       <th>Completion</th>
@@ -360,7 +344,6 @@ export default function TeacherAnalytics() {
                     {analytics.map((a, i) => (
                       <tr key={i}>
                         <td style={{ fontWeight: 600 }}>{a.studentName}</td>
-                        <td style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{a.department || "—"}</td>
                         <td>{a.group || "—"}</td>
                         <td>{formatTime(a.watchTime)}</td>
                         <td>
@@ -399,7 +382,7 @@ export default function TeacherAnalytics() {
             {enrolledStudents.length === 0 ? (
               <div className="empty-state">
                 <GraduationCap />
-                <p>No students found in the <strong>{user?.department}</strong> department yet.</p>
+                <p>No students found.</p>
               </div>
             ) : (
               <div className="table-container">
@@ -408,7 +391,6 @@ export default function TeacherAnalytics() {
                     <tr>
                       <th>Name</th>
                       <th>Email</th>
-                      <th>Semester</th>
                       <th>Group / Section</th>
                       <th>College</th>
                       <th>Joined</th>
@@ -419,7 +401,6 @@ export default function TeacherAnalytics() {
                       <tr key={s._id}>
                         <td style={{ fontWeight: 600 }}>{s.name}</td>
                         <td>{s.email}</td>
-                        <td style={{ fontWeight: 500, color: "var(--primary)" }}>Sem {s.semester}</td>
                         <td>{s.group || "—"}</td>
                         <td>{s.collegeName || "—"}</td>
                         <td>{new Date(s.createdAt).toLocaleDateString()}</td>

@@ -8,8 +8,6 @@ const resourceSchema = new mongoose.Schema(
     fileName:    { type: String, required: true },
     filePath:    { type: String, required: true },
     category:    { type: String, enum: ["Question Paper", "Records", "Assignment", "Other"], default: "Other" },
-    department:  { type: String, default: "" },
-    semester:    { type: Number, default: 1 },
     subject:     { type: String, default: "" },
     teacherId:   { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   },

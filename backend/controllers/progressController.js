@@ -92,10 +92,9 @@ export const getVideoAnalytics = async (req, res) => {
     const video = await Video.findById(videoId).lean();
     if (!video) return res.status(404).json({ msg: "Video not found" });
 
-    const progressList = await Progress.find({ videoId }).populate(
-      "studentId",
-      "name email group collegeName role department"
-    ).lean();
+    const progressList = await Progress.find({ videoId })
+      .populate("studentId", "name email group collegeName role")
+      .lean();
 
     const isDrive = video.videoSource === "drive";
 
@@ -108,8 +107,6 @@ export const getVideoAnalytics = async (req, res) => {
       studentEmail: p.studentId?.email || "",
       group: p.studentId?.group || "",
       collegeName: p.studentId?.collegeName || "",
-      department: p.studentId?.department || "",
-      watchTime: p.watchTime,
       maxPosition: p.maxPosition || 0,
       completionPercent:
         video.duration > 0
@@ -134,10 +131,9 @@ export const getClassroomAnalytics = async (req, res) => {
     const videos = await Video.find({ teacherId: req.user._id }).lean();
     const videoIds = videos.map((v) => v._id);
 
-    const progressList = await Progress.find({ videoId: { $in: videoIds } }).populate(
-      "studentId",
-      "name email group collegeName role department"
-    ).lean();
+    const progressList = await Progress.find({ videoId: { $in: videoIds } })
+      .populate("studentId", "name email group collegeName role")
+      .lean();
 
     // group by student (exclude teachers)
     const studentMap = {};
@@ -151,8 +147,6 @@ export const getClassroomAnalytics = async (req, res) => {
           studentEmail: p.studentId.email,
           group: p.studentId.group || "",
           collegeName: p.studentId.collegeName || "",
-          department: p.studentId.department || "",
-          totalWatchTime: 0,
           videosCompleted: 0,
           totalVideos: videos.length,
         };
@@ -188,12 +182,11 @@ export const exportCSV = async (req, res) => {
     const video = await Video.findById(videoId).lean();
     if (!video) return res.status(404).json({ msg: "Video not found" });
 
-    const progressList = await Progress.find({ videoId }).populate(
-      "studentId",
-      "name email group collegeName role department"
-    ).lean();
+    const progressList = await Progress.find({ videoId })
+      .populate("studentId", "name email group collegeName role")
+      .lean();
 
-    let csv = "Name,Email,Dept,Group,College,Watch Time (s),Completion %,Completed\n";
+    let csv = "Name,Email,Group,College,Watch Time (s),Completion %,Completed\n";
 
     const isDriveV = video.videoSource === "drive";
     for (const p of progressList) {
@@ -204,8 +197,6 @@ export const exportCSV = async (req, res) => {
           ? Math.min(100, Math.round((metric / video.duration) * 100))
           : 0;
       csv += `"${p.studentId?.name || ""}","${p.studentId?.email || ""}","${
-        p.studentId?.department || ""
-      }","${
         p.studentId?.group || ""
       }","${p.studentId?.collegeName || ""}",${p.watchTime},${pct},${
         p.isCompleted ? "Yes" : "No"
@@ -230,7 +221,7 @@ export const exportClassroomCSV = async (req, res) => {
     const videoIds = videos.map((v) => v._id);
 
     const progressList = await Progress.find({ videoId: { $in: videoIds } })
-      .populate("studentId", "name email group role department collegeName")
+      .populate("studentId", "name email group role collegeName")
       .populate("videoId", "title")
       .lean();
 
@@ -244,8 +235,6 @@ export const exportClassroomCSV = async (req, res) => {
         studentMap[sid] = {
           name: p.studentId.name,
           email: p.studentId.email,
-          dept: p.studentId.department || "-",
-          college: p.studentId.collegeName || "-",
           group: p.studentId.group || "-",
           totalWatchTime: 0,
           videosCompleted: 0,
@@ -257,11 +246,11 @@ export const exportClassroomCSV = async (req, res) => {
       if (p.videoId?.title) studentMap[sid].watchedLectures.add(p.videoId.title);
     }
 
-    let csv = "Name,Email,Dept,College,Group,Total Watch Time (s),Videos Completed,Completion %,Watched Lectures\n";
+    let csv = "Name,Email,College,Group,Total Watch Time (s),Videos Completed,Completion %,Watched Lectures\n";
     for (const s of Object.values(studentMap)) {
       const pct = videos.length > 0 ? Math.round((s.videosCompleted / videos.length) * 100) : 0;
       const lectures = Array.from(s.watchedLectures).join(" | ");
-      csv += `"${s.name}","${s.email}","${s.dept}","${s.college}","${s.group}",${s.totalWatchTime},${s.videosCompleted},${pct},"${lectures}"\n`;
+      csv += `"${s.name}","${s.email}","${s.college}","${s.group}",${s.totalWatchTime},${s.videosCompleted},${pct},"${lectures}"\n`;
     }
 
     res.setHeader("Content-Type", "text/csv");
@@ -300,11 +289,11 @@ export const exportClicksCSV = async (req, res) => {
     if (!video) return res.status(404).json({ msg: "Video not found" });
 
     const clicks = await VideoClick.find({ videoId })
-      .populate("studentId", "name email group collegeName department role")
+      .populate("studentId", "name email group collegeName role")
       .sort({ clickedAt: -1 })
       .lean();
 
-    let csv = "Video Name,Name,Email,Dept,Group,College,Clicked At,Total Clicks\n";
+    let csv = "Video Name,Name,Email,Group,College,Clicked At,Total Clicks\n";
 
     // Group clicks by student to show total clicks per student
     const studentClicks = {};
@@ -315,7 +304,6 @@ export const exportClicksCSV = async (req, res) => {
         studentClicks[sid] = {
           name: c.studentId.name || "",
           email: c.studentId.email || "",
-          dept: c.studentId.department || "",
           group: c.studentId.group || "",
           college: c.studentId.collegeName || "",
           firstClick: c.clickedAt,
@@ -329,7 +317,7 @@ export const exportClicksCSV = async (req, res) => {
     }
 
     for (const s of Object.values(studentClicks)) {
-      csv += `"${video.title}","${s.name}","${s.email}","${s.dept}","${s.group}","${s.college}","${new Date(s.lastClick).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}",${s.count}\n`;
+      csv += `"${video.title}","${s.name}","${s.email}","${s.group}","${s.college}","${new Date(s.lastClick).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}",${s.count}\n`;
     }
 
     res.setHeader("Content-Type", "text/csv");
@@ -354,7 +342,7 @@ export const exportAllClicksCSV = async (req, res) => {
 
     // Get all clicks across all teacher's videos
     const clicks = await VideoClick.find({ videoId: { $in: videoIds } })
-      .populate("studentId", "name email group collegeName department role")
+      .populate("studentId", "name email group collegeName role")
       .sort({ clickedAt: -1 })
       .lean();
 
@@ -369,7 +357,6 @@ export const exportAllClicksCSV = async (req, res) => {
         studentMap[sid] = {
           name: c.studentId.name || "",
           email: c.studentId.email || "",
-          dept: c.studentId.department || "",
           group: c.studentId.group || "",
           college: c.studentId.collegeName || "",
           videos: {},  // videoId -> { title, count, lastClick }
@@ -389,7 +376,7 @@ export const exportAllClicksCSV = async (req, res) => {
       }
     }
 
-    let csv = "Name,Email,Dept,Group,College,Video Names,Total Clicks,Most Recent Click,Total Videos Clicked\n";
+    let csv = "Name,Email,Group,College,Video Names,Total Clicks,Most Recent Click,Total Videos Clicked\n";
 
     for (const s of Object.values(studentMap)) {
       const videoEntries = Object.values(s.videos);
@@ -401,7 +388,7 @@ export const exportAllClicksCSV = async (req, res) => {
       const totalClicks = videoEntries.reduce((sum, v) => sum + v.count, 0);
       const mostRecentClick = new Date(Math.max(...videoEntries.map((v) => new Date(v.lastClick))));
 
-      csv += `"${s.name}","${s.email}","${s.dept}","${s.group}","${s.college}","${videoNames}",${totalClicks},"${mostRecentClick.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}",${totalVideos}\n`;
+      csv += `"${s.name}","${s.email}","${s.group}","${s.college}","${videoNames}",${totalClicks},"${mostRecentClick.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}",${totalVideos}\n`;
     }
 
     res.setHeader("Content-Type", "text/csv");

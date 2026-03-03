@@ -13,11 +13,11 @@ function getVideoSource(url) {
 /* ===================== CREATE VIDEO (Teacher) ===================== */
 export const createVideo = async (req, res) => {
   try {
-    const { title, youtubeUrl, videoUrl, description, duration, department, semester, subject } = req.body;
+    const { title, youtubeUrl, videoUrl, description, duration, subject } = req.body;
     const finalUrl = videoUrl || youtubeUrl;
 
-    if (!title || !finalUrl || !department || !semester || !subject)
-      return res.status(400).json({ msg: "Required fields: title, videoUrl, department, semester, subject" });
+    if (!title || !finalUrl || !subject)
+      return res.status(400).json({ msg: "Required fields: title, videoUrl, subject" });
 
     const source = getVideoSource(finalUrl);
     if (!source)
@@ -28,8 +28,6 @@ export const createVideo = async (req, res) => {
       description: description || "",
       videoUrl: finalUrl,
       videoSource: source,
-      department,
-      semester: Number(semester) || 1,
       subject,
       teacherId: req.user._id,
       duration: duration || 0,
@@ -48,12 +46,6 @@ export const getVideos = async (req, res) => {
 
     if (req.user.role === "teacher") {
       filter.teacherId = req.user._id;
-    } else {
-      const dept = req.query.department || req.user.department;
-      const sem = req.query.semester || req.user.semester;
-      
-      if (dept) filter.department = dept;
-      if (sem) filter.semester = Number(sem);
     }
 
     const videos = await Video.find(filter)
@@ -85,7 +77,7 @@ export const updateVideo = async (req, res) => {
     if (video.teacherId.toString() !== req.user._id.toString())
       return res.status(403).json({ msg: "Not your video" });
 
-    const { title, youtubeUrl, videoUrl, description, duration, department, semester, subject } = req.body;
+    const { title, youtubeUrl, videoUrl, description, duration, subject } = req.body;
     const finalUrl = videoUrl || youtubeUrl;
 
     if (finalUrl !== undefined) {
@@ -98,9 +90,7 @@ export const updateVideo = async (req, res) => {
 
     if (title !== undefined) video.title = title;
     if (description !== undefined) video.description = description;
-    if (duration !== undefined) video.duration = Number(duration) || 0;
-    if (department !== undefined) video.department = department;
-    if (semester !== undefined) video.semester = Number(semester) || 1;
+    if (duration !== undefined) video.duration = duration;
     if (subject !== undefined) video.subject = subject;
 
     await video.save();

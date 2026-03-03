@@ -1,6 +1,6 @@
 import axios from "axios";
-let baseURL="https://studytrack-n18i.onrender.com/"
-const API = axios.create({ baseURL: import.meta.env.VITE_API_URL || "/api" });
+let baseURL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API = axios.create({ baseURL });
 
 // attach JWT on every request
 API.interceptors.request.use((config) => {

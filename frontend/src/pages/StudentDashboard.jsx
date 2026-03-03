@@ -2,9 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import API from "../api/axios";
-import { Play, BookOpen, Search, Clock } from "lucide-react";
-import { DEPARTMENTS } from "../constants";
-
+import { Play, BookOpen, Search, Clock, Filter } from "lucide-react";
+import { SUBJECT_TOPICS } from "../constants";
 /* Helper: extract YouTube video ID for thumbnail */
 function getYouTubeId(url) {
   const m = url?.match(/(?:youtu\.be\/|v=|\/embed\/|\/v\/)([a-zA-Z0-9_-]{11})/);
@@ -17,24 +16,8 @@ export default function StudentDashboard() {
   const [progressMap, setProgressMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  
-  // Open Access: Filter by Choice (defaults to localStorage, then user profile)
-  const [selectedDept, setSelectedDept] = useState(() => {
-    return localStorage.getItem("student_dept") || user?.department || "Computer Science";
-  });
-  const [selectedSem, setSelectedSem] = useState(() => {
-    return Number(localStorage.getItem("student_sem")) || user?.semester || 1;
-  });
+  const [selectedSubject, setSelectedSubject] = useState("");
 
-  // Sync to localStorage
-  useEffect(() => {
-    localStorage.setItem("student_dept", selectedDept);
-  }, [selectedDept]);
-
-  useEffect(() => {
-    localStorage.setItem("student_sem", selectedSem);
-  }, [selectedSem]);
-  
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -42,7 +25,7 @@ export default function StudentDashboard() {
       setLoading(true);
       try {
         const [vRes, pRes] = await Promise.all([
-          API.get(`/videos?department=${selectedDept}&semester=${selectedSem}`),
+          API.get(`/videos`),
           API.get("/progress/me"),
         ]);
         setVideos(vRes.data);
@@ -57,7 +40,7 @@ export default function StudentDashboard() {
       }
     };
     if (user) load();
-  }, [selectedDept, selectedSem, user]);
+  }, [user]);
 
   if (loading)
     return (
@@ -73,12 +56,13 @@ export default function StudentDashboard() {
     return Math.min(100, Math.round((p.watchTime / video.duration) * 100));
   };
 
-  const filtered = videos.filter(
-    (v) =>
-      v.title.toLowerCase().includes(search.toLowerCase()) ||
-      (v.description || "").toLowerCase().includes(search.toLowerCase()) ||
-      (v.subject || "").toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = videos.filter((v) => {
+    const matchesSearch = v.title.toLowerCase().includes(search.toLowerCase()) ||
+        (v.description || "").toLowerCase().includes(search.toLowerCase()) ||
+        (v.subject || "").toLowerCase().includes(search.toLowerCase());
+    const matchesSubject = selectedSubject === "" || v.subject === selectedSubject;
+    return matchesSearch && matchesSubject;
+  });
 
   // Group by Subject
   const groups = filtered.reduce((acc, v) => {
@@ -95,35 +79,7 @@ export default function StudentDashboard() {
           <div>
             <div className="header-title-row">
               <h2 style={{ margin: 0 }}>Explore Lectures</h2>
-              <div className="profile-badge">
-                My Profile: {user?.department}
-              </div>
             </div>
-            <p>Viewing <strong>{selectedDept}</strong> • Semester <strong>{selectedSem}</strong></p>
-          </div>
-
-          <div className="header-actions">
-            <select 
-              className="header-select" 
-              value={selectedDept}
-              onChange={(e) => setSelectedDept(e.target.value)}
-            >
-              {DEPARTMENTS.map(dept => (
-                <option key={dept} value={dept}>{dept}</option>
-              ))}
-              <option value="Other">Other</option>
-            </select>
-
-            <select 
-              className="header-select" 
-              style={{ minWidth: "100px" }}
-              value={selectedSem}
-              onChange={(e) => setSelectedSem(Number(e.target.value))}
-            >
-              {[1, 2, 3, 4, 5, 6].map(s => (
-                <option key={s} value={s}>Sem {s}</option>
-              ))}
-            </select>
           </div>
         </div>
       </div>
@@ -165,10 +121,10 @@ export default function StudentDashboard() {
           </div>
         </div>
 
-        {/* Search */}
-        <div className="toolbar">
-          <div className="toolbar-left" style={{ width: "100%" }}>
-            <div className="search-bar" style={{ maxWidth: "100%" }}>
+        {/* Search & Filter */}
+        <div className="toolbar" style={{ flexWrap: "wrap", gap: 15 }}>
+          <div className="toolbar-left" style={{ flex: 1, minWidth: 280 }}>
+            <div className="search-bar" style={{ maxWidth: "100%", width: "100%" }}>
               <Search size={18} />
               <input
                 type="text"
@@ -177,6 +133,24 @@ export default function StudentDashboard() {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
+          </div>
+          <div className="toolbar-right" style={{ display: "flex", gap: 10 }}>
+             <select
+               className="form-select"
+               value={selectedSubject}
+               onChange={(e) => setSelectedSubject(e.target.value)}
+               style={{ 
+                 minWidth: "200px", 
+                 background: "var(--bg-card)",
+                 border: "1px solid var(--border-color)",
+                 boxShadow: "0 2px 8px rgba(0,0,0,0.4)"
+               }}
+             >
+               <option value="">All Subjects</option>
+               {SUBJECT_TOPICS.map((topic) => (
+                 <option key={topic} value={topic}>{topic}</option>
+               ))}
+             </select>
           </div>
         </div>
 

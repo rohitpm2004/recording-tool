@@ -251,8 +251,9 @@ export default function VideoPlayer({ mode = "student" }) {
 
       setTimeout(() => {
         if (document.activeElement?.tagName === "IFRAME") {
-          setPlaying(prev => !prev);
-          window.focus();
+          // If the iframe is focused, the user clicked it, so they are likely playing the video.
+          // Explicitly set it to true rather than toggling it, which can cause inversion.
+          setPlaying(true);
         }
       }, 150);
     };

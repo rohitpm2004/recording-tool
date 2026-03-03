@@ -1,9 +1,8 @@
 import { useEffect, useState, useMemo } from "react";
 import { useAuth } from "../context/AuthContext";
 import API from "../api/axios";
-import { FileText, Image as ImageIcon, Download, Eye, Search } from "lucide-react";
-import { DEPARTMENTS } from "../constants";
-
+import { FileText, Image as ImageIcon, Download, Eye, Search, Filter } from "lucide-react";
+import { SUBJECT_TOPICS } from "../constants";
 const CATEGORIES = ["Question Paper", "Records", "Assignment", "Other"];
 
 export default function StudentResources() {
@@ -12,39 +11,28 @@ export default function StudentResources() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("All");
+  const [selectedSubject, setSelectedSubject] = useState("");
 
   // Open Access: Filter by Choice (defaults to localStorage, then user profile)
-  const [selectedDept, setSelectedDept] = useState(() => {
-    return localStorage.getItem("student_dept") || user?.department || "Computer Science";
-  });
-  const [selectedSem, setSelectedSem] = useState(() => {
-    return Number(localStorage.getItem("student_sem")) || user?.semester || 1;
-  });
 
-  // Sync to localStorage
-  useEffect(() => {
-    localStorage.setItem("student_dept", selectedDept);
-  }, [selectedDept]);
-
-  useEffect(() => {
-    localStorage.setItem("student_sem", selectedSem);
-  }, [selectedSem]);
 
   useEffect(() => {
     setLoading(true);
-    API.get(`/resources?department=${selectedDept}&semester=${selectedSem}`)
+    API.get(`/resources`)
       .then((res) => setResources(res.data))
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [selectedDept, selectedSem]);
+  }, []);
 
   const filteredResources = useMemo(() => {
     return resources.filter((r) => {
       const matchesSearch = 
         r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (r.description && r.description.toLowerCase().includes(searchQuery.toLowerCase()));
+        (r.description && r.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (r.subject && r.subject.toLowerCase().includes(searchQuery.toLowerCase()));
       const matchesFilter = selectedFilter === "All" || r.category === selectedFilter;
-      return matchesSearch && matchesFilter;
+      const matchesSubject = selectedSubject === "" || r.subject === selectedSubject;
+      return matchesSearch && matchesFilter && matchesSubject;
     });
   }, [resources, searchQuery, selectedFilter]);
 
@@ -63,45 +51,7 @@ export default function StudentResources() {
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 2 }}>
               <h2 style={{ margin: 0 }}>Resources</h2>
-              <div style={{ 
-                fontSize: "0.72rem", 
-                fontWeight: 700, 
-                color: "var(--primary)", 
-                background: "var(--primary-light)", 
-                padding: "4px 12px", 
-                borderRadius: "100px",
-                border: "1px solid var(--primary-glow)",
-                textTransform: "uppercase",
-                letterSpacing: "0.5px"
-              }}>
-                My Profile: {user?.department}
-              </div>
             </div>
-            <p>Viewing <strong>{selectedDept}</strong> • Semester <strong>{selectedSem}</strong></p>
-          </div>
-
-          <div style={{ display: "flex", gap: 10 }}>
-            <select 
-              className="header-select" 
-              value={selectedDept}
-              onChange={(e) => setSelectedDept(e.target.value)}
-            >
-              {DEPARTMENTS.map(dept => (
-                <option key={dept} value={dept}>{dept}</option>
-              ))}
-              <option value="Other">Other</option>
-            </select>
-
-            <select 
-              className="header-select" 
-              style={{ minWidth: "100px" }}
-              value={selectedSem}
-              onChange={(e) => setSelectedSem(Number(e.target.value))}
-            >
-              {[1, 2, 3, 4, 5, 6].map(s => (
-                <option key={s} value={s}>Sem {s}</option>
-              ))}
-            </select>
           </div>
         </div>
       </div>
@@ -124,6 +74,24 @@ export default function StudentResources() {
                 style={{ paddingLeft: 40, width: "100%", maxWidth: 400 }}
               />
             </div>
+          </div>
+          <div className="toolbar-right" style={{ display: "flex", gap: 10 }}>
+             <select
+               className="form-select"
+               value={selectedSubject}
+               onChange={(e) => setSelectedSubject(e.target.value)}
+               style={{ 
+                 minWidth: "200px", 
+                 background: "var(--bg-card)",
+                 border: "1px solid var(--border-color)",
+                 boxShadow: "0 2px 8px rgba(0,0,0,0.4)"
+               }}
+             >
+               <option value="">All Subjects</option>
+               {SUBJECT_TOPICS.map((topic) => (
+                 <option key={topic} value={topic}>{topic}</option>
+               ))}
+             </select>
           </div>
         </div>
 

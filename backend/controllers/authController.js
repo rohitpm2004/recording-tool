@@ -7,7 +7,7 @@ import generateToken from "../utils/generateToken.js";
 /* ===================== REGISTER ===================== */
 export const register = async (req, res) => {
   try {
-    const { name, email, password, role, collegeName, group, department, semester, classCode } = req.body;
+    const { name, email, password, role, collegeName, group, classCode, topic } = req.body;
 
     if (!name || !email || !password || !role)
       return res.status(400).json({ msg: "All fields are required" });
@@ -24,15 +24,10 @@ export const register = async (req, res) => {
       role,
       collegeName: collegeName || "",
       group: group || "",
-      department: department || "",
-      semester: Number(semester) || 1,
+      topic: topic || "",
     };
 
     if (role === "teacher") {
-      // VALIDATION: Only specific teacher emails allowed
-      if (!email.endsWith("teacher0817@gmail.com")) {
-        return res.status(400).json({ msg: "Only authorized teachers can create accounts. Please use the correct institutional email." });
-      }
       // Generate a unique class code for the teacher (kept for backward compatibility/legacy)
       userData.classCode = await User.generateClassCode();
     }
@@ -50,8 +45,7 @@ export const register = async (req, res) => {
       email: user.email,
       role: user.role,
       group: user.group,
-      department: user.department,
-      semester: user.semester,
+      topic: user.topic,
     };
 
     if (user.role === "teacher") responseUser.classCode = user.classCode;
@@ -80,8 +74,7 @@ export const login = async (req, res) => {
       email: user.email,
       role: user.role,
       group: user.group,
-      department: user.department,
-      semester: user.semester,
+      topic: user.topic,
     };
 
     if (user.role === "teacher") responseUser.classCode = user.classCode;
@@ -102,8 +95,7 @@ export const getMe = async (req, res) => {
     email: user.email,
     role: user.role,
     group: user.group,
-    department: user.department,
-    semester: user.semester,
+    topic: user.topic,
   };
 
   if (user.role === "teacher") responseUser.classCode = user.classCode;
@@ -198,18 +190,11 @@ export const resetPassword = async (req, res) => {
 /* ===================== GET ENROLLED STUDENTS (Teacher) ===================== */
 export const getEnrolledStudents = async (req, res) => {
   try {
-    if (req.user.role !== "teacher")
-      return res.status(403).json({ msg: "Teachers only" });
-
-    // Flexible matching for department changes (e.g. "Computer Science" vs "Computer Science Department")
-    const deptMatch = req.user.department?.replace(/ Department$/, "") || "";
-    
     const students = await User.find({ 
-      department: { $regex: new RegExp(deptMatch, "i") },
       role: "student" 
     })
-      .select("name email group collegeName semester createdAt")
-      .sort({ semester: 1, name: 1 });
+      .select("name email group collegeName createdAt")
+      .sort({ name: 1 });
 
     res.json(students);
   } catch (err) {
@@ -223,21 +208,19 @@ export const exportStudentsCSV = async (req, res) => {
     if (req.user.role !== "teacher")
       return res.status(403).json({ msg: "Teachers only" });
 
-    const deptMatch = req.user.department?.replace(/ Department$/, "") || "";
     const students = await User.find({ 
-      department: { $regex: new RegExp(`^${deptMatch}`, "i") },
       role: "student" 
     })
-    .select("name email group collegeName semester createdAt")
-    .sort({ semester: 1, name: 1 });
+    .select("name email group collegeName createdAt")
+    .sort({ name: 1 });
 
-    let csv = "Name,Email,Semester,Group/Section,College,Registration Date\n";
+    let csv = "Name,Email,Group/Section,College,Registration Date\n";
     for (const s of students) {
-      csv += `"${s.name}","${s.email}",${s.semester},"${s.group || "-"}","${s.collegeName || "-"}","${new Date(s.createdAt).toLocaleDateString()}"\n`;
+      csv += `"${s.name}","${s.email}","${s.group || "-"}","${s.collegeName || "-"}","${new Date(s.createdAt).toLocaleDateString()}"\n`;
     }
 
     res.setHeader("Content-Type", "text/csv");
-    res.setHeader("Content-Disposition", `attachment; filename="Students-${deptMatch}.csv"`);
+    res.setHeader("Content-Disposition", `attachment; filename="Students.csv"`);
     res.send(csv);
   } catch (err) {
     res.status(500).json({ msg: err.message });

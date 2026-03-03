@@ -8,7 +8,9 @@ export default function Login() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const justReset = searchParams.get("reset") === "1";
-  const [email, setEmail] = useState("");
+  
+  // Initialize email from localStorage if available
+  const [email, setEmail] = useState(() => localStorage.getItem("savedEmail") || "");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -19,7 +21,15 @@ export default function Login() {
     setLoading(true);
     try {
       const user = await login(email, password);
-      navigate(user.role === "teacher" ? "/teacher" : "/student");
+      // Save email to localStorage for autofill on next login
+      localStorage.setItem("savedEmail", email);
+      
+      const redirectUrl = searchParams.get("redirect");
+      if (redirectUrl) {
+        navigate(redirectUrl);
+      } else {
+        navigate(user.role === "teacher" ? "/teacher" : "/student");
+      }
     } catch (err) {
       setError(err.response?.data?.msg || "Login failed");
     } finally {

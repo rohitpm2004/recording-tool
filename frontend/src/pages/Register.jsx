@@ -2,14 +2,12 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { UserPlus, Mail, Lock, User, Building2, Users, KeyRound } from "lucide-react";
-import { DEPARTMENTS } from "../constants";
 
 export default function Register() {
   const { register } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({
-    name: "", email: "", password: "", role: "student", collegeName: "", group: "", classCode: "",
-    department: "", semester: 1
+    name: "", email: "", password: "", role: "student", collegeName: "", group: "", classCode: ""
   });
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
@@ -122,26 +120,6 @@ export default function Register() {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Department</label>
-            <select className="form-input" value={form.department} onChange={set("department")} required>
-              <option value="">Select Department</option>
-              {DEPARTMENTS.map(dept => (
-                <option key={dept} value={dept}>{dept}</option>
-              ))}
-              <option value="Other">Other</option>
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Semester</label>
-            <select className="form-input" value={form.semester} onChange={set("semester")} required>
-              {[1, 2, 3, 4, 5, 6].map(s => (
-                <option key={s} value={s}>Semester {s}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="form-group">
             <label className="form-label">Role</label>
             <select className="form-select" value={form.role} onChange={set("role")}>
               <option value="student">Student</option>
@@ -149,13 +127,6 @@ export default function Register() {
             </select>
           </div>
 
-          {form.role === "teacher" && (
-            <div className="form-group">
-              <small style={{ color: "var(--primary)", fontWeight: 500 }}>
-                💡 Note: Only authorized emails (*teacher0817@gmail.com) can register as teachers.
-              </small>
-            </div>
-          )}
 
           {form.role === "student" && (
             <>
@@ -166,29 +137,44 @@ export default function Register() {
                     size={18}
                     style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none" }}
                   />
-                  <input
-                    className="form-input"
-                    placeholder="e.g. MIT"
+                  <select
+                    className="form-select"
                     value={form.collegeName}
                     onChange={set("collegeName")}
                     style={{ paddingLeft: 42 }}
-                  />
+                    required
+                  >
+                    <option value="" disabled>Select College</option>
+                    <option value="vivekananda college">Vivekananda College</option>
+                    <option value="city college">City College</option>
+                    <option value="begumpet college">Begumpet College</option>
+                    <option value="golconda college">Golconda College</option>
+                    <option value="Malkajgiri college">Malkajgiri College</option>
+                    <option value="Hussanialam college">Hussanialam College</option>
+                  </select>
                 </div>
               </div>
               <div className="form-group">
-                <label className="form-label">Group / Section</label>
+                <label className="form-label">Group</label>
                 <div style={{ position: "relative" }}>
                   <Users
                     size={18}
                     style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", pointerEvents: "none" }}
                   />
-                  <input
-                    className="form-input"
-                    placeholder="e.g. CS-A"
+                  <select
+                    className="form-select"
                     value={form.group}
                     onChange={set("group")}
                     style={{ paddingLeft: 42 }}
-                  />
+                    required
+                  >
+                    <option value="" disabled>Select Group</option>
+                    <option value="BSC">BSC</option>
+                    <option value="BCOM">BCOM</option>
+                    <option value="BCA">BCA</option>
+                    <option value="BA">BA</option>
+                    <option value="OTHER">OTHER</option>
+                  </select>
                 </div>
               </div>
             </>

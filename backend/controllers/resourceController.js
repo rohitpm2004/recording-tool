@@ -8,7 +8,7 @@ export const uploadResource = async (req, res) => {
     if (!req.file)
       return res.status(400).json({ msg: "No file uploaded" });
 
-    const { title, description, category, department, semester, subject } = req.body;
+    const { title, description, category, subject } = req.body;
     if (!title)
       return res.status(400).json({ msg: "Title is required" });
 
@@ -29,8 +29,6 @@ export const uploadResource = async (req, res) => {
       title,
       description: description || "",
       category: category || "Other",
-      department: department || req.user.department || "",
-      semester: Number(semester) || req.user.semester || 1,
       subject: subject || "",
       fileType,
       fileName: req.file.originalname,
@@ -51,13 +49,6 @@ export const getResources = async (req, res) => {
 
     if (req.user.role === "teacher") {
       filter.teacherId = req.user._id;
-    } else {
-      // Students: Filter by department and semester from query params
-      const dept = req.query.department || req.user.department;
-      const sem = req.query.semester || req.user.semester;
-      
-      if (dept) filter.department = dept;
-      if (sem) filter.semester = Number(sem);
     }
 
     const resources = await Resource.find(filter).sort({ createdAt: -1 });
