@@ -151,7 +151,7 @@ export default function Register() {
                     <option value="golconda college">Golconda College</option>
                     <option value="Malkajgiri college">Malkajgiri College</option>
                     <option value="Hussanialam college">Hussanialam College</option>
-                    <option value="Hussanialam college">BJR College</option>
+                    <option value="BJR college">BJR College</option>
                   </select>
                 </div>
               </div>
